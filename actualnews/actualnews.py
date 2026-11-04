@@ -11,7 +11,8 @@ job.json:
   "voice": "voice.wav",                 # Ed's voiceover (mono 48 kHz wav)
   "words": "words.json",                # ElevenLabs Scribe words list ([{"text","start","end"}...]);
                                         # inline [tags] are ignored automatically
-  "stories": [                          # exactly 3, in order
+  "stories": [                          # 1 (breaking extra) to ~8, in order; stories after the
+                                        # first need "start_phrase" (first words Ed says for it)
     {"image": "img1.png", "focus": 0.55, "tab": "BREAKING NEWS",
      "headline": "INTERNET SOLVES CRASH IN 0.2 SECONDS",
      "ticker": "NTSB: cause not yet determined   ■   ...   ■   "},
@@ -68,15 +69,31 @@ DUR = round(VEND + 1.4, 2)
 def norm(s): return re.sub(r'[^a-z]', '', s.lower())
 
 # ---------- story starts ----------
+# Any number of stories (1 for a breaking extra, ~6 for the daily episode).
+# Each story after the first gives "start_phrase": the first 1-3 words Ed says for it
+# (e.g. "Meanwhile", "Over in Hollywood", "And finally"); the renderer finds them in order.
+NS = len(job['stories'])
 if 'story_starts' in job:
     starts = job['story_starts']
 else:
     starts = [0.0]
-    for i in range(len(words) - 2):
-        a, b, c = norm(words[i]['text']), norm(words[i + 1]['text']), norm(words[i + 2]['text'])
-        if a == 'also' and b == 'in' and len(starts) == 1: starts.append(words[i]['start'] - 0.05)
-        if a == 'and' and b == 'finally' and len(starts) == 2: starts.append(words[i]['start'] - 0.05)
-    while len(starts) < 3: starts.append(VEND)  # fallback
+    wi = 0
+    for st in job['stories'][1:]:
+        ph = [norm(x) for x in st.get('start_phrase', '').split() if norm(x)]
+        found = None
+        if ph:
+            for i in range(wi, len(words) - len(ph) + 1):
+                if all(norm(words[i + k]['text']) == ph[k] for k in range(len(ph))):
+                    found = i; break
+        if found is None:  # legacy roundup phrases
+            for i in range(wi, len(words) - 1):
+                a, b = norm(words[i]['text']), norm(words[i + 1]['text'])
+                if (a, b) in (('also', 'in'), ('and', 'finally')) and words[i]['start'] > starts[-1] + 1:
+                    found = i; break
+        if found is None:
+            raise SystemExit(f"could not find start_phrase {st.get('start_phrase')!r} in the transcript")
+        starts.append(words[found]['start'] - 0.05)
+        wi = found + 1
 WHOOSH = starts[1:]
 
 # ---------- sentences -> poses ----------
@@ -103,6 +120,13 @@ else:
             elif m == len(ss) - 1: p = 2 if txt.endswith('?') else 0
             else: p = 2 if (m - 1) % 2 == 0 else 1
             TL.append((st, p))
+    # short stories (one sentence) get a mid-story reaction so the anchor doesn't just point
+    react = [2, 1, 0]; r = 0
+    bounds = list(starts) + [VEND]
+    for k in range(len(starts)):
+        inside = [x for x in TL if bounds[k] - 0.1 <= x[0] < bounds[k + 1] - 0.1]
+        if len(inside) <= 1 and bounds[k + 1] - bounds[k] > 2.5:
+            TL.append((bounds[k] + 0.6 * (bounds[k + 1] - bounds[k]), react[r % 3])); r += 1
     TL.append((VEND + 0.2, 4))
     TL = sorted(TL)
 
