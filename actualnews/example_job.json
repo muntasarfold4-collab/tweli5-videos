@@ -1,0 +1,12 @@
+{
+  "voice": "voice.wav",
+  "words": "words.json",
+  "stories": [
+    {"image": "img1.png", "focus": 0.56, "tab": "BREAKING NEWS", "headline": "INTERNET SOLVES CRASH IN 0.2 SECONDS",
+     "ticker": "NTSB: cause not yet determined   ■   All 9 on board passed away   ■   Investigators: please stop helping   ■   "},
+    {"image": "img2.png", "focus": 0.55, "tab": "ALSO IN THE NEWS", "headline": "STREAMERS FIND NEW LOW. AGAIN.",
+     "ticker": "Claims totally unverified   ■   Adin Ross cut the camera   ■   Pop culture is fine, apparently   ■   "},
+    {"image": "img3.png", "focus": 0.5, "tab": "AND FINALLY", "headline": "NATION PANIC-BUYS BEANS",
+     "ticker": "UK: keep 3 days of food and water   ■   Tinned food sales up 40% at one chain   ■   Don’t panic (panic)   ■   "}
+  ]
+}
