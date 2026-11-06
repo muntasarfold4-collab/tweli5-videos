@@ -49,6 +49,8 @@ if '--stills' in args: STILLS = [float(x) for x in args[args.index('--stills') +
 if '--cover' in args: COVER = float(args[args.index('--cover') + 1])
 jobdir = os.path.dirname(os.path.abspath(JOB))
 job = json.load(open(JOB))
+# "show": "news" (default, red tabs) or "culture" (internet-culture show, purple tabs)
+TABC = (124, 44, 255) if job.get('show') == 'culture' else (200, 18, 28)
 P = lambda f: f if os.path.isabs(f) else os.path.join(jobdir, f)
 
 # ---------- words (strip [tags]) ----------
@@ -289,12 +291,12 @@ def ui(im, t):
         k = spring(dt - 0.35) if i == 0 else spring(dt + 0.02, 18, 10)
         tw = s['tab'].width + 44
         x = round(-tw - 40 + (L - 8 + tw + 40) * k)
-        d.rectangle((x, 1424, x + tw, 1488), fill=RED)
+        d.rectangle((x, 1424, x + tw, 1488), fill=TABC)
         im.paste(s['tab'], (x + 22, 1431), s['tab'])
     if t > 0.55:
         k = eio((t - 0.55) / 0.35)
         d.rectangle((L, 1488, round(L + (R - L) * k), 1592), fill=(250, 250, 250))
-        d.rectangle((L, 1488, L + 8, 1592), fill=RED)
+        d.rectangle((L, 1488, L + 8, 1592), fill=TABC)
         r = eio((dt - (0.8 if i == 0 else 0.15)) / 0.55)
         cw = round(s['hl'].width * r)
         if cw > 0:
