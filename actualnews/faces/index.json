@@ -1,0 +1,4 @@
+{
+  "_about": "Photo library of famous people, built ONLY from photos the user sent in chat. One entry per person. file = path inside actualnews/faces/. aliases = other names/handles. focus = 0-1 horizontal face position. credit = photographer/source the user gave (empty if none). Never add photos from anywhere else.",
+  "people": []
+}
