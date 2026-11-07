@@ -20,7 +20,9 @@ job.json:
     {"image": "img3.png", "focus": 0.5, "tab": "AND FINALLY", ...}
   ],
   "story_starts": [0, 19.3, 33.55],     # optional; auto-detected from "Also in the news" / "And finally"
-  "poses": [[0,0],[1.15,3],...]         # optional; auto from sentences if missing
+  "poses": [[0,0],[1.15,3],...],        # optional; auto from sentences if missing
+  "bleep": ["word", ...]                # optional extra words to censor; common swears are bleeped
+                                        # automatically (voice muted + 1 kHz beep, caption "F***")
 }
 Poses: 0 clasped hands, 1 glasses pull-down, 2 shrug, 3 point at screen, 4 peace sign.
 Assets (plate.png, pose0-4.png, sting.mp3, whoosh.mp3) are read from ./assets next to this file.
@@ -65,6 +67,17 @@ for w in raw:
         if t.endswith(']'): intag = False
         continue
     words.append(dict(text=t, start=float(w['start']), end=float(w['end'])))
+# ---------- bleeps (swears: mute voice, beep, starred caption) ----------
+SWEARS = {'fuck', 'fucking', 'fucked', 'fucker', 'motherfucker', 'shit', 'shitty', 'bullshit', 'bitch',
+          'bitches', 'asshole', 'arsehole', 'bastard', 'prick', 'wanker', 'twat', 'bollocks',
+          'pissed', 'goddamn'} | {x.lower() for x in job.get('bleep', [])}
+BLEEPS = []
+for w in words:
+    core = re.sub(r'[^a-z]', '', w['text'].lower())
+    if core and core in SWEARS:
+        BLEEPS.append((max(w['start'] - 0.03, 0), w['end'] + 0.03))
+        m = re.match(r'^([^A-Za-z]*)([A-Za-z])([A-Za-z]*)(.*)$', w['text'])
+        if m: w['text'] = m.group(1) + m.group(2).upper() + '*' * max(len(m.group(3)), 2) + m.group(4)
 VEND = words[-1]['end']
 DUR = round(VEND + 1.4, 2)
 
@@ -341,13 +354,18 @@ ff.stdin.close(); ff.wait()
 
 # audio: voice + sting at 0 (ducked) + whoosh at each story change
 inputs = ['-i', silent, '-i', P(job['voice']), '-i', A('sting.mp3')]
-fl = ['[1:a]aresample=48000,apad[v]', '[2:a]aresample=48000,volume=0.22,afade=t=out:st=1.2:d=0.8[s]']
+mute = ''.join(f",volume=enable='between(t,{a:.3f},{b:.3f})':volume=0" for a, b in BLEEPS)
+fl = [f'[1:a]aresample=48000{mute},apad[v]', '[2:a]aresample=48000,volume=0.22,afade=t=out:st=1.2:d=0.8[s]']
 mix = ['[v]', '[s]']
 for k, wt in enumerate(WHOOSH):
     inputs += ['-i', A('whoosh.mp3')]
     ms = max(int((wt - 0.12) * 1000), 0)
     fl.append(f'[{3 + k}:a]aresample=48000,volume=0.45,adelay={ms}|{ms}[w{k}]')
     mix.append(f'[w{k}]')
+if BLEEPS:
+    on = '+'.join(f'between(t,{a:.3f},{b:.3f})' for a, b in BLEEPS)
+    fl.append(f"sine=f=1000:sample_rate=48000:d={DUR},volume='0.8*gt({on},0)':eval=frame[bp]")
+    mix.append('[bp]')
 fl.append(''.join(mix) + f'amix=inputs={len(mix)}:normalize=0:duration=first,atrim=0:{DUR},alimiter=limit=0.95[a]')
 subprocess.run(['ffmpeg', '-y', '-loglevel', 'error'] + inputs + ['-filter_complex', ';'.join(fl), '-map', '0:v', '-map', '[a]',
                 '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-movflags', '+faststart', OUT], check=True)
