@@ -16,6 +16,7 @@ job.json:
     {"image": "img1.png", "focus": 0.55, "tab": "BREAKING NEWS",
      "headline": "INTERNET SOLVES CRASH IN 0.2 SECONDS",
      "ticker": "NTSB: cause not yet determined   ■   ...   ■   "},
+    {"images": [{"image": "a.jpg", "focus": 0.4}, {"image": "b.jpg", "focus": 0.6}], ...},  # several pics, equal turns
     {"image": "img2.png", "focus": 0.5, "tab": "ALSO IN THE NEWS", ...},
     {"image": "img3.png", "focus": 0.5, "tab": "AND FINALLY", ...}
   ],
@@ -171,16 +172,19 @@ def fit(im, maxw):
 plate = Image.open(A('plate.png')).convert('RGB')
 S = []
 for i, st in enumerate(job['stories']):
-    src = Image.open(P(st['image'])).convert('RGB')
-    ar = SW / SH
-    if src.width / src.height > ar:
-        ch = src.height; cw = round(ch * ar)
-        x0 = int(min(max(st.get('focus', 0.5) * src.width - cw / 2, 0), src.width - cw))
-        crop = src.crop((x0, 0, x0 + cw, ch))
-    else:
+    def crop_to_screen(path, focus):
+        src = Image.open(P(path)).convert('RGB')
+        ar = SW / SH
+        if src.width / src.height > ar:
+            ch = src.height; cw = round(ch * ar)
+            x0 = int(min(max(focus * src.width - cw / 2, 0), src.width - cw))
+            return src.crop((x0, 0, x0 + cw, ch))
         cw = src.width; ch = round(cw / ar); y0 = (src.height - ch) // 2
-        crop = src.crop((0, y0, cw, y0 + ch))
-    S.append(dict(t=starts[i], img=crop, tab=ctext(st['tab'], FB, 46, (255, 255, 255), 0.9),
+        return src.crop((0, y0, cw, y0 + ch))
+    # one picture ("image"/"focus") or several ("images": [{"image","focus"}...]) shown in equal turns
+    pics = st.get('images') or [{'image': st['image'], 'focus': st.get('focus', 0.5)}]
+    crops = [crop_to_screen(p_['image'], p_.get('focus', 0.5)) for p_ in pics]
+    S.append(dict(t=starts[i], img=crops[0], imgs=crops, tab=ctext(st['tab'], FB, 46, (255, 255, 255), 0.9),
                   hl=fit(ctext(st['headline'].upper(), FB, 66, (12, 12, 16)), 730),
                   tk=ctext(st['ticker'] * 3, FM, 30, (236, 238, 244), 0.92)))
 
@@ -220,16 +224,19 @@ def screen(t):
     i, dt = story_at(t)
     s = S[i]
     nxt = S[i + 1]['t'] if i + 1 < len(S) else DUR
-    z = 1.0 + 0.07 * min(dt / max(nxt - s['t'], 1), 1)
-    src = s['img']; w, h = src.width / z, src.height / z
+    span = max(nxt - s['t'], 1)
+    k = min(int(dt / span * len(s['imgs'])), len(s['imgs']) - 1)
+    seg = span / len(s['imgs']); sdt = dt - k * seg
+    z = 1.0 + 0.07 * min(sdt / seg, 1)
+    src = s['imgs'][k]; w, h = src.width / z, src.height / z
     cx, cy = src.width / 2, src.height / 2
     im = src.transform((SW, SH), Image.EXTENT, (cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2), Image.BICUBIC)
     im = ImageEnhance.Brightness(im).enhance(0.95 + 0.03 * math.sin(t * 7.3) * math.sin(t * 3.1))
     gl = Image.new('L', (SW, SH), 0)
     ImageDraw.Draw(gl).polygon([(0, 0), (SW * 0.45, 0), (SW * 0.15, SH), (0, SH)], fill=20)
     im = Image.composite(Image.new('RGB', (SW, SH), (255, 255, 255)), im, gl.filter(ImageFilter.GaussianBlur(30)))
-    if i > 0 and dt < 0.22:
-        im = Image.blend(im, Image.new('RGB', (SW, SH), (255, 255, 255)), 0.85 * (1 - dt / 0.22))
+    if (i > 0 or k > 0) and sdt < 0.22:
+        im = Image.blend(im, Image.new('RGB', (SW, SH), (255, 255, 255)), 0.85 * (1 - sdt / 0.22))
     return im
 
 def world(t):

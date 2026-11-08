@@ -1,4 +1,30 @@
 {
-  "_about": "Photo library of famous people, built ONLY from photos the user sent in chat. One entry per person. file = path inside actualnews/faces/. aliases = other names/handles. focus = 0-1 horizontal face position. credit = photographer/source the user gave (empty if none). Never add photos from anywhere else.",
-  "people": []
+ "_about": "Photo library of famous people, built ONLY from photos the user sent in chat. One entry per person. file = path inside actualnews/faces/. aliases = other names/handles. focus = 0-1 horizontal face position. credit = photographer/source the user gave (empty if none). Never add photos from anywhere else.",
+ "people": [
+  {
+   "name": "Tommy Robinson",
+   "aliases": [
+    "Stephen Yaxley-Lennon",
+    "Yaxley-Lennon"
+   ],
+   "file": "tommy-robinson.jpg",
+   "focus": 0.5,
+   "credit": "",
+   "added": "2026-11-08",
+   "note": "user photo, Unhinged 3 ringside"
+  },
+  {
+   "name": "HSTikkyTokky",
+   "aliases": [
+    "HS",
+    "Harry Smith",
+    "HS TikkyTokky"
+   ],
+   "file": "hstikkytokky.jpg",
+   "focus": 0.55,
+   "credit": "",
+   "added": "2026-11-08",
+   "note": "user photo; HS (right) holding Tommy Robinson (left) - use focus ~0.55 for HS"
+  }
+ ]
 }
