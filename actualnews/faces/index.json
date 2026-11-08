@@ -25,6 +25,31 @@
    "credit": "",
    "added": "2026-11-08",
    "note": "user photo; HS (right) holding Tommy Robinson (left) - use focus ~0.55 for HS"
+  },
+  {
+   "name": "Dana White",
+   "aliases": [
+    "UFC CEO",
+    "UFC boss",
+    "Dana White (UFC)"
+   ],
+   "file": "dana-white-ufc.jpg",
+   "focus": 0.56,
+   "credit": "",
+   "added": "2026-11-08",
+   "note": "user photo; UFC Dana White ONLY - not the former Pentagon spokesperson of the same name"
+  },
+  {
+   "name": "Donald Trump",
+   "aliases": [
+    "Trump",
+    "President Trump"
+   ],
+   "file": "donald-trump.jpg",
+   "focus": 0.38,
+   "credit": "",
+   "added": "2026-11-08",
+   "note": "user photo with Dana White on a White House balcony; Trump on the left (focus ~0.38), Dana right"
   }
  ]
 }
