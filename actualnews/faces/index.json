@@ -50,6 +50,18 @@
    "credit": "",
    "added": "2026-11-08",
    "note": "user photo with Dana White on a White House balcony; Trump on the left (focus ~0.38), Dana right"
+  },
+  {
+   "name": "Jensen Huang",
+   "aliases": [
+    "Nvidia CEO",
+    "Jensen"
+   ],
+   "file": "jensen-huang.jpg",
+   "focus": 0.5,
+   "credit": "",
+   "added": "2026-11-09",
+   "note": "user photo, portrait"
   }
  ]
 }
